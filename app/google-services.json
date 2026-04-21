@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "741509292855",
-    "project_id": "drinkmaster-a0a40",
-    "storage_bucket": "drinkmaster-a0a40.firebasestorage.app"
+    "project_number": "860361956127",
+    "project_id": "aaaaa-6c0d5",
+    "storage_bucket": "aaaaa-6c0d5.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:741509292855:android:727d28d0f69210ce5f30b2",
+        "mobilesdk_app_id": "1:860361956127:android:278c60c652b47b40d3ee2a",
         "android_client_info": {
           "package_name": "com.example.drinkmaster"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyBJ4xnnTUf9Dic5GM88dHw3FkPJJVMuVAQ"
+          "current_key": "AIzaSyAT7uhDC5QBhpwV9oYL9_hvMSGE3yYNRak"
         }
       ],
       "services": {
