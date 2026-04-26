@@ -6,31 +6,13 @@ import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material3.DrawerValue
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalDrawerSheet
-import androidx.compose.material3.ModalNavigationDrawer
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.NavigationDrawerItem
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.rememberDrawerState
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavDestination.Companion.hierarchy
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.currentBackStackEntryAsState
-import androidx.navigation.compose.rememberNavController
+import androidx.navigation.compose.*
+import com.example.drinkmaster.screens.DrinkDetailScreen
 import com.example.drinkmaster.screens.HomeScreen
 import com.example.drinkmaster.screens.MapScreen
 import com.example.drinkmaster.screens.MyMenuScreen
@@ -48,6 +30,9 @@ fun MainScreen(
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
 
+    // Ukrywamy bottom bar na ekranie szczegółów
+    val showBottomBar = currentDestination?.route?.startsWith("detail/") == false
+
     ModalNavigationDrawer(
         drawerState = drawerState,
         drawerContent = {
@@ -58,29 +43,20 @@ fun MainScreen(
                     style = MaterialTheme.typography.headlineSmall,
                     color = MaterialTheme.colorScheme.primary
                 )
-
                 NavigationDrawerItem(
                     icon = { Icon(Icons.Filled.Person, contentDescription = null) },
                     label = {
-                        Text(
-                            text = if (currentUserEmail.isBlank()) {
-                                "Zalogowany uzytkownik"
-                            } else {
-                                currentUserEmail
-                            }
-                        )
+                        Text(currentUserEmail.ifBlank { "Zalogowany uzytkownik" })
                     },
                     selected = false,
                     onClick = { }
                 )
-
                 NavigationDrawerItem(
                     icon = { Icon(Icons.Filled.Info, contentDescription = null) },
                     label = { Text("Projekt DrinkMaster") },
                     selected = false,
                     onClick = { }
                 )
-
                 NavigationDrawerItem(
                     icon = { Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = null) },
                     label = { Text("Wyloguj") },
@@ -98,13 +74,7 @@ fun MainScreen(
                 TopAppBar(
                     title = { Text("DrinkMaster") },
                     navigationIcon = {
-                        IconButton(
-                            onClick = {
-                                scope.launch {
-                                    drawerState.open()
-                                }
-                            }
-                        ) {
+                        IconButton(onClick = { scope.launch { drawerState.open() } }) {
                             Icon(Icons.Filled.Menu, contentDescription = "Menu")
                         }
                     },
@@ -114,26 +84,27 @@ fun MainScreen(
                 )
             },
             bottomBar = {
-                NavigationBar {
-                    bottomNavigationDestinations.forEach { destination ->
-                        val selected = currentDestination?.hierarchy?.any {
-                            it.route == destination.route
-                        } == true
-
-                        NavigationBarItem(
-                            icon = { Icon(destination.icon, contentDescription = destination.label) },
-                            label = { Text(destination.label) },
-                            selected = selected,
-                            onClick = {
-                                navController.navigate(destination.route) {
-                                    popUpTo(navController.graph.startDestinationId) {
-                                        saveState = true
+                if (showBottomBar) {
+                    NavigationBar {
+                        bottomNavigationDestinations.forEach { destination ->
+                            val selected = currentDestination?.hierarchy?.any {
+                                it.route == destination.route
+                            } == true
+                            NavigationBarItem(
+                                icon = { Icon(destination.icon, contentDescription = destination.label) },
+                                label = { Text(destination.label) },
+                                selected = selected,
+                                onClick = {
+                                    navController.navigate(destination.route) {
+                                        popUpTo(navController.graph.startDestinationId) {
+                                            saveState = true
+                                        }
+                                        launchSingleTop = true
+                                        restoreState = true
                                     }
-                                    launchSingleTop = true
-                                    restoreState = true
                                 }
-                            }
-                        )
+                            )
+                        }
                     }
                 }
             }
@@ -144,13 +115,28 @@ fun MainScreen(
                 modifier = Modifier.padding(innerPadding)
             ) {
                 composable(DrinkMasterDestination.Home.route) {
-                    HomeScreen()
+                    HomeScreen(
+                        onDrinkClick = { drinkId ->
+                            navController.navigate("detail/$drinkId")
+                        }
+                    )
                 }
                 composable(DrinkMasterDestination.Map.route) {
                     MapScreen()
                 }
                 composable(DrinkMasterDestination.MyMenu.route) {
-                    MyMenuScreen()
+                    MyMenuScreen(
+                        onDrinkClick = { drinkId ->
+                            navController.navigate("detail/$drinkId")
+                        }
+                    )
+                }
+                composable("detail/{drinkId}") { backStackEntry ->
+                    val drinkId = backStackEntry.arguments?.getString("drinkId") ?: return@composable
+                    DrinkDetailScreen(
+                        drinkId = drinkId,
+                        onBack = { navController.popBackStack() }
+                    )
                 }
             }
         }

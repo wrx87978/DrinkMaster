@@ -1,0 +1,20 @@
+package com.example.drinkmaster.data.local
+
+import androidx.room.*
+import kotlinx.coroutines.flow.Flow
+
+@Dao
+interface FavoriteDao {
+
+    @Query("SELECT * FROM favorites ORDER BY name ASC")
+    fun getAll(): Flow<List<FavoriteDrink>>
+
+    @Query("SELECT EXISTS(SELECT 1 FROM favorites WHERE id = :id)")
+    fun isFavorite(id: String): Flow<Boolean>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insert(drink: FavoriteDrink)
+
+    @Query("DELETE FROM favorites WHERE id = :id")
+    suspend fun deleteById(id: String)
+}

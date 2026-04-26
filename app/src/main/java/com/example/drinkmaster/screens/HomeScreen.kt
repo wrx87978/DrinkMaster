@@ -1,146 +1,160 @@
 package com.example.drinkmaster.screens
 
-import com.example.drinkmaster.components.DrinkCard
-import com.example.drinkmaster.model.Drink
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
-
-private val sampleDrinks = listOf(
-    Drink(
-        id = "1",
-        name = "Mojito",
-        category = "Classic",
-        ingredient = "Mint"
-    ),
-    Drink(
-        id = "2",
-        name = "Margarita",
-        category = "Sour",
-        ingredient = "Tequila"
-    ),
-    Drink(
-        id = "3",
-        name = "Old Fashioned",
-        category = "Classic",
-        ingredient = "Whiskey"
-    ),
-    Drink(
-        id = "4",
-        name = "Pina Colada",
-        category = "Tropical",
-        ingredient = "Pineapple"
-    ),
-    Drink(
-        id = "5",
-        name = "Espresso Martini",
-        category = "Coffee",
-        ingredient = "Espresso"
-    )
-)
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.AsyncImage
+import com.example.drinkmaster.data.model.CocktailDto
+import com.example.drinkmaster.ui.home.HomeUiState
+import com.example.drinkmaster.ui.home.HomeViewModel
 
 @Composable
-fun HomeScreen() {
+fun HomeScreen(
+    onDrinkClick: (String) -> Unit,
+    vm: HomeViewModel = viewModel()
+) {
+    val uiState by vm.uiState.collectAsStateWithLifecycle()
     var query by remember { mutableStateOf("") }
 
-    val filteredDrinks = sampleDrinks.filter {
-        it.name.contains(query.trim(), ignoreCase = true) ||
-                it.ingredient.contains(query.trim(), ignoreCase = true)
-    }
-
     LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+        contentPadding = PaddingValues(vertical = 16.dp)
     ) {
         item {
-            Text(
-                text = "Home",
-                style = MaterialTheme.typography.headlineSmall
-            )
+            Text("DrinkMaster", style = MaterialTheme.typography.headlineSmall)
         }
 
         item {
-            OutlinedTextField(
-                value = query,
-                onValueChange = { query = it },
+            Row(
                 modifier = Modifier.fillMaxWidth(),
-                label = { Text("Wyszukaj drink lub skladnik") },
-                singleLine = true
-            )
-        }
-
-        item {
-            Card(modifier = Modifier.fillMaxWidth()) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = "Miejsce na API",
-                            style = MaterialTheme.typography.titleMedium
-                        )
-                        Text(
-                            text = "Tutaj pozniej bedzie podlaczone The Cocktail DB.",
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                    }
-
-                    Button(onClick = { }) {
-                        Text("Odswiez")
-                    }
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                OutlinedTextField(
+                    value = query,
+                    onValueChange = {
+                        query = it
+                        vm.search(it)
+                    },
+                    modifier = Modifier.weight(1f),
+                    label = { Text("Drink lub skladnik") },
+                    singleLine = true
+                )
+                Button(onClick = { vm.search(query) }) {
+                    Text("Szukaj")
                 }
             }
         }
 
-        if (filteredDrinks.isEmpty()) {
-            item {
-                Card(
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(24.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
+        when (val state = uiState) {
+            is HomeUiState.Idle -> {
+                item {
+                    Box(
+                        modifier = Modifier.fillMaxWidth().padding(32.dp),
+                        contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = "Brak wynikow",
-                            style = MaterialTheme.typography.titleMedium
-                        )
-                        Text(
-                            text = "Nie znaleziono drinkow pasujacych do wyszukiwania.",
-                            style = MaterialTheme.typography.bodyMedium
+                            "Wyszukaj swojego ulubionego drinka!",
+                            style = MaterialTheme.typography.bodyLarge
                         )
                     }
                 }
             }
-        } else {
-            items(filteredDrinks) { drink ->
-                DrinkCard(drink = drink)
+
+            is HomeUiState.Loading -> {
+                item {
+                    Box(
+                        modifier = Modifier.fillMaxWidth().padding(32.dp),
+                        contentAlignment = Alignment.Center
+                    ) { CircularProgressIndicator() }
+                }
+            }
+
+            is HomeUiState.Error -> {
+                item {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.errorContainer
+                        )
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Text(
+                                state.message,
+                                color = MaterialTheme.colorScheme.onErrorContainer
+                            )
+                            Spacer(Modifier.height(8.dp))
+                            Button(onClick = { vm.loadAll() }) {
+                                Text("Sprobuj ponownie")
+                            }
+                        }
+                    }
+                }
+            }
+
+            is HomeUiState.Success -> {
+                item {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            "Znaleziono: ${state.drinks.size}",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        TextButton(onClick = { vm.loadAll() }) {
+                            Text("Odswiez")
+                        }
+                    }
+                }
+
+                items(state.drinks, key = { it.id }) { drink ->
+                    DrinkPreviewCard(drink = drink, onClick = { onDrinkClick(drink.id) })
+                }
             }
         }
     }
 }
 
+@Composable
+private fun DrinkPreviewCard(
+    drink: CocktailDto,
+    onClick: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() }
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            drink.thumbnailUrl?.let { url ->
+                AsyncImage(
+                    model = url,
+                    contentDescription = drink.name,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.size(80.dp)
+                )
+            }
+            Text(
+                text = drink.name,
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.padding(horizontal = 16.dp)
+            )
+        }
+    }
+}
