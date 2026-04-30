@@ -3,12 +3,16 @@ package com.example.drinkmaster.screens
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -23,6 +27,7 @@ fun HomeScreen(
     vm: HomeViewModel = viewModel()
 ) {
     val uiState by vm.uiState.collectAsStateWithLifecycle()
+    val recentDrinks by vm.recentDrinks.collectAsStateWithLifecycle()
     var query by remember { mutableStateOf("") }
 
     LazyColumn(
@@ -52,6 +57,26 @@ fun HomeScreen(
                 )
                 Button(onClick = { vm.search(query) }) {
                     Text("Szukaj")
+                }
+            }
+        }
+
+        // Sekcja Ostatnio Przeglądane
+        if (recentDrinks.isNotEmpty()) {
+            item {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        text = "Ostatnio przeglądane",
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                    LazyRow(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        contentPadding = PaddingValues(bottom = 8.dp)
+                    ) {
+                        items(recentDrinks, key = { it.id }) { drink ->
+                            RecentDrinkItem(drink = drink, onClick = { onDrinkClick(drink.id) })
+                        }
+                    }
                 }
             }
         }
@@ -125,6 +150,35 @@ fun HomeScreen(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun RecentDrinkItem(
+    drink: CocktailDto,
+    onClick: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .width(100.dp)
+            .clickable { onClick() },
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        AsyncImage(
+            model = drink.thumbnailUrl,
+            contentDescription = drink.name,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier
+                .size(80.dp)
+                .clip(RoundedCornerShape(8.dp))
+        )
+        Text(
+            text = drink.name,
+            style = MaterialTheme.typography.bodySmall,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.padding(top = 4.dp)
+        )
     }
 }
 

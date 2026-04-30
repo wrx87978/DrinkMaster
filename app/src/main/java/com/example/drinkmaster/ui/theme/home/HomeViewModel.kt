@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.drinkmaster.data.model.CocktailDto
 import com.example.drinkmaster.data.repository.CocktailRepository
+import com.example.drinkmaster.data.repository.RecentDrinksManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -15,12 +16,17 @@ class HomeViewModel(
     private val _uiState = MutableStateFlow<HomeUiState>(HomeUiState.Idle)
     val uiState: StateFlow<HomeUiState> = _uiState
 
+    val recentDrinks: StateFlow<List<CocktailDto>> = RecentDrinksManager.recentDrinks
+
     init {
         loadAll()
     }
 
     fun search(query: String) {
-        if (query.isBlank()) return
+        if (query.isBlank()) {
+            loadAll()
+            return
+        }
 
         viewModelScope.launch {
             _uiState.value = HomeUiState.Loading
