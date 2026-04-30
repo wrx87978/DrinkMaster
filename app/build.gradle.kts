@@ -72,4 +72,8 @@ dependencies {
     implementation("androidx.room:room-ktx:2.7.0-alpha13")
     ksp("androidx.room:room-compiler:2.7.0-alpha13")
 
+    // Google Maps
+    implementation(libs.maps.compose)
+    implementation(libs.play.services.maps)
+    implementation(libs.accompanist.permissions)
 }
