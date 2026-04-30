@@ -7,7 +7,7 @@ import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
-@Database(entities = [FavoriteDrink::class], version = 2, exportSchema = false)
+@Database(entities = [FavoriteDrink::class], version = 3, exportSchema = false)
 abstract class DrinkDatabase : RoomDatabase() {
 
     abstract fun favoriteDao(): FavoriteDao
@@ -22,6 +22,12 @@ abstract class DrinkDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE favorites ADD COLUMN folder TEXT")
+            }
+        }
+
         fun getInstance(context: Context): DrinkDatabase =
             INSTANCE ?: synchronized(this) {
                 Room.databaseBuilder(
@@ -29,7 +35,7 @@ abstract class DrinkDatabase : RoomDatabase() {
                     DrinkDatabase::class.java,
                     "drink_database"
                 )
-                .addMigrations(MIGRATION_1_2)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
                 .build().also { INSTANCE = it }
             }
     }

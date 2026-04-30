@@ -87,7 +87,6 @@ class DrinkDetailViewModel(application: Application) : AndroidViewModel(applicat
         
         viewModelScope.launch {
             if (!isFavorite.value) {
-                // Auto-add to favorites
                 val state = _uiState.value as? DrinkDetailUiState.Success ?: return@launch
                 dao.insert(
                     FavoriteDrink(
@@ -110,7 +109,6 @@ class DrinkDetailViewModel(application: Application) : AndroidViewModel(applicat
 
         viewModelScope.launch {
             if (!isFavorite.value) {
-                // Auto-add to favorites
                 val state = _uiState.value as? DrinkDetailUiState.Success ?: return@launch
                 dao.insert(
                     FavoriteDrink(
@@ -123,6 +121,28 @@ class DrinkDetailViewModel(application: Application) : AndroidViewModel(applicat
                 )
             } else {
                 dao.updateNote(drinkId, note)
+            }
+        }
+    }
+
+    fun updateFolder(folder: String?) {
+        val drinkId = _drinkId.value
+        if (drinkId.isEmpty()) return
+
+        viewModelScope.launch {
+            if (!isFavorite.value) {
+                val state = _uiState.value as? DrinkDetailUiState.Success ?: return@launch
+                dao.insert(
+                    FavoriteDrink(
+                        id           = state.drink.id,
+                        name         = state.drink.name,
+                        category     = state.drink.category,
+                        thumbnailUrl = state.drink.thumbnailUrl,
+                        folder       = folder
+                    )
+                )
+            } else {
+                dao.updateFolder(drinkId, folder)
             }
         }
     }

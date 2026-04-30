@@ -10,5 +10,6 @@ data class FavoriteDrink(
     val category: String?,
     val thumbnailUrl: String?,
     val rating: Int = 0,
-    val note: String? = null
+    val note: String? = null,
+    val folder: String? = null
 )

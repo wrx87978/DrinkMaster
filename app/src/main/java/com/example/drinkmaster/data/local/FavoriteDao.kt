@@ -26,4 +26,10 @@ interface FavoriteDao {
 
     @Query("UPDATE favorites SET note = :note WHERE id = :id")
     suspend fun updateNote(id: String, note: String?)
+
+    @Query("UPDATE favorites SET folder = :folder WHERE id = :id")
+    suspend fun updateFolder(id: String, folder: String?)
+
+    @Query("SELECT * FROM favorites WHERE folder = :folder")
+    fun getByFolder(folder: String): Flow<List<FavoriteDrink>>
 }
