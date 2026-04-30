@@ -8,5 +8,7 @@ data class FavoriteDrink(
     @PrimaryKey val id: String,
     val name: String,
     val category: String?,
-    val thumbnailUrl: String?
+    val thumbnailUrl: String?,
+    val rating: Int = 0,
+    val note: String? = null
 )
