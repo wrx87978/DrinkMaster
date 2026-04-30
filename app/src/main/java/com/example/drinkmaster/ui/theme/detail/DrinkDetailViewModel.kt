@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.drinkmaster.data.local.DrinkDatabase
 import com.example.drinkmaster.data.local.FavoriteDrink
 import com.example.drinkmaster.data.repository.CocktailRepository
+import com.example.drinkmaster.data.repository.RecentDrinksManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -49,10 +50,11 @@ class DrinkDetailViewModel(application: Application) : AndroidViewModel(applicat
             _uiState.value = DrinkDetailUiState.Loading
             try {
                 val drink = repository.getDrinkById(id)
-                _uiState.value = if (drink != null) {
-                    DrinkDetailUiState.Success(drink)
+                if (drink != null) {
+                    _uiState.value = DrinkDetailUiState.Success(drink)
+                    RecentDrinksManager.addDrink(drink)
                 } else {
-                    DrinkDetailUiState.Error("Nie znaleziono drinka.")
+                    _uiState.value = DrinkDetailUiState.Error("Nie znaleziono drinka.")
                 }
             } catch (e: Exception) {
                 _uiState.value = DrinkDetailUiState.Error("Brak polaczenia z internetem.")
