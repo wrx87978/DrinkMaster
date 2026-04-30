@@ -24,6 +24,16 @@ class DrinkDetailViewModel(application: Application) : AndroidViewModel(applicat
     val uiState: StateFlow<DrinkDetailUiState> = _uiState
 
     private val _drinkId = MutableStateFlow("")
+    
+    val favoriteDrink: StateFlow<FavoriteDrink?> = _drinkId.flatMapLatest { id ->
+        if (id.isEmpty()) MutableStateFlow(null)
+        else dao.getById(id)
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5_000),
+        initialValue = null
+    )
+
     val isFavorite: StateFlow<Boolean> = _drinkId.flatMapLatest { id ->
         if (id.isEmpty()) MutableStateFlow(false)
         else dao.isFavorite(id)
@@ -65,6 +75,52 @@ class DrinkDetailViewModel(application: Application) : AndroidViewModel(applicat
                         thumbnailUrl = state.drink.thumbnailUrl
                     )
                 )
+            }
+        }
+    }
+
+    fun updateRating(rating: Int) {
+        val drinkId = _drinkId.value
+        if (drinkId.isEmpty()) return
+        
+        viewModelScope.launch {
+            if (!isFavorite.value) {
+                // Auto-add to favorites
+                val state = _uiState.value as? DrinkDetailUiState.Success ?: return@launch
+                dao.insert(
+                    FavoriteDrink(
+                        id           = state.drink.id,
+                        name         = state.drink.name,
+                        category     = state.drink.category,
+                        thumbnailUrl = state.drink.thumbnailUrl,
+                        rating       = rating
+                    )
+                )
+            } else {
+                dao.updateRating(drinkId, rating)
+            }
+        }
+    }
+
+    fun updateNote(note: String) {
+        val drinkId = _drinkId.value
+        if (drinkId.isEmpty()) return
+
+        viewModelScope.launch {
+            if (!isFavorite.value) {
+                // Auto-add to favorites
+                val state = _uiState.value as? DrinkDetailUiState.Success ?: return@launch
+                dao.insert(
+                    FavoriteDrink(
+                        id           = state.drink.id,
+                        name         = state.drink.name,
+                        category     = state.drink.category,
+                        thumbnailUrl = state.drink.thumbnailUrl,
+                        note         = note
+                    )
+                )
+            } else {
+                dao.updateNote(drinkId, note)
             }
         }
     }

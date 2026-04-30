@@ -9,6 +9,9 @@ interface FavoriteDao {
     @Query("SELECT * FROM favorites ORDER BY name ASC")
     fun getAll(): Flow<List<FavoriteDrink>>
 
+    @Query("SELECT * FROM favorites WHERE id = :id")
+    fun getById(id: String): Flow<FavoriteDrink?>
+
     @Query("SELECT EXISTS(SELECT 1 FROM favorites WHERE id = :id)")
     fun isFavorite(id: String): Flow<Boolean>
 
@@ -17,4 +20,10 @@ interface FavoriteDao {
 
     @Query("DELETE FROM favorites WHERE id = :id")
     suspend fun deleteById(id: String)
+
+    @Query("UPDATE favorites SET rating = :rating WHERE id = :id")
+    suspend fun updateRating(id: String, rating: Int)
+
+    @Query("UPDATE favorites SET note = :note WHERE id = :id")
+    suspend fun updateNote(id: String, note: String?)
 }

@@ -16,6 +16,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
+import com.example.drinkmaster.components.RatingBar
+import com.example.drinkmaster.data.local.FavoriteDrink
 import com.example.drinkmaster.data.model.CocktailDto
 import com.example.drinkmaster.ui.detail.DrinkDetailUiState
 import com.example.drinkmaster.ui.detail.DrinkDetailViewModel
@@ -29,8 +31,9 @@ fun DrinkDetailScreen(
 ) {
     LaunchedEffect(drinkId) { vm.load(drinkId) }
 
-    val uiState    by vm.uiState.collectAsStateWithLifecycle()
-    val isFavorite by vm.isFavorite.collectAsStateWithLifecycle()
+    val uiState      by vm.uiState.collectAsStateWithLifecycle()
+    val isFavorite   by vm.isFavorite.collectAsStateWithLifecycle()
+    val favoriteData by vm.favoriteDrink.collectAsStateWithLifecycle()
 
     Scaffold(
         topBar = {
@@ -83,6 +86,9 @@ fun DrinkDetailScreen(
             is DrinkDetailUiState.Success -> {
                 DrinkDetailContent(
                     drink = state.drink,
+                    favoriteData = favoriteData,
+                    onRatingChange = { vm.updateRating(it) },
+                    onNoteChange = { vm.updateNote(it) },
                     modifier = Modifier.padding(innerPadding)
                 )
             }
@@ -93,6 +99,9 @@ fun DrinkDetailScreen(
 @Composable
 private fun DrinkDetailContent(
     drink: CocktailDto,
+    favoriteData: FavoriteDrink?,
+    onRatingChange: (Int) -> Unit,
+    onNoteChange: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -116,13 +125,40 @@ private fun DrinkDetailContent(
             modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Kategoria
-            drink.category?.let {
-                AssistChip(
-                    onClick = {},
-                    label = { Text(it) }
+            // Kategoria i Ocena
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                drink.category?.let {
+                    AssistChip(
+                        onClick = {},
+                        label = { Text(it) }
+                    )
+                }
+                
+                RatingBar(
+                    rating = favoriteData?.rating ?: 0,
+                    onRatingChange = onRatingChange,
+                    starSize = 24.dp
                 )
             }
+
+            // Notatka
+            var noteText by remember(favoriteData?.id) { mutableStateOf(favoriteData?.note ?: "") }
+            
+            OutlinedTextField(
+                value = noteText,
+                onValueChange = { 
+                    noteText = it
+                    onNoteChange(it)
+                },
+                label = { Text("Moja notatka") },
+                placeholder = { Text("Dodaj własną notatkę...") },
+                modifier = Modifier.fillMaxWidth(),
+                minLines = 2
+            )
 
             // Składniki
             val ingredients = drink.ingredientList()
