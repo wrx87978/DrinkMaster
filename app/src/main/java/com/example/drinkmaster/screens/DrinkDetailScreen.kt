@@ -7,6 +7,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -89,6 +90,7 @@ fun DrinkDetailScreen(
                     favoriteData = favoriteData,
                     onRatingChange = { vm.updateRating(it) },
                     onNoteChange = { vm.updateNote(it) },
+                    onFolderChange = { vm.updateFolder(it) },
                     modifier = Modifier.padding(innerPadding)
                 )
             }
@@ -102,8 +104,12 @@ private fun DrinkDetailContent(
     favoriteData: FavoriteDrink?,
     onRatingChange: (Int) -> Unit,
     onNoteChange: (String) -> Unit,
+    onFolderChange: (String?) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val folders = listOf("Impreza", "Randka", "Chill w domu")
+    var showFolderMenu by remember { mutableStateOf(false) }
+
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -159,6 +165,43 @@ private fun DrinkDetailContent(
                 modifier = Modifier.fillMaxWidth(),
                 minLines = 2
             )
+
+            // Wybór Folderu
+            Box {
+                OutlinedButton(
+                    onClick = { showFolderMenu = true },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(Icons.Default.Folder, contentDescription = null)
+                    Spacer(Modifier.width(8.dp))
+                    Text(favoriteData?.folder?.let { "Folder: $it" } ?: "Dodaj do folderu")
+                }
+                DropdownMenu(
+                    expanded = showFolderMenu,
+                    onDismissRequest = { showFolderMenu = false },
+                    modifier = Modifier.fillMaxWidth(0.9f)
+                ) {
+                    folders.forEach { folderName ->
+                        DropdownMenuItem(
+                            text = { Text(folderName) },
+                            onClick = {
+                                onFolderChange(folderName)
+                                showFolderMenu = false
+                            }
+                        )
+                    }
+                    if (favoriteData?.folder != null) {
+                        HorizontalDivider()
+                        DropdownMenuItem(
+                            text = { Text("Usuń z folderu", color = MaterialTheme.colorScheme.error) },
+                            onClick = {
+                                onFolderChange(null)
+                                showFolderMenu = false
+                            }
+                        )
+                    }
+                }
+            }
 
             // Składniki
             val ingredients = drink.ingredientList()
